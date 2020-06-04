@@ -1012,6 +1012,7 @@ static int p_query_sm(query_stat_t *st)
 		}
 
 #ifdef ANDROID
+        int protect_socket(int fd);
         protect_socket(st->sock);
 #endif
 

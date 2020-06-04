@@ -3,13 +3,22 @@ project(pdnsd C)
 
 set(CMAKE_C_STANDARD 11)
 
+if(ANDROID)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+include_directories(${LIB_ANCILLARY_DIR})
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
+if(ANDROID)
+configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+else()
 execute_process ( COMMAND ${PROJECT_SOURCE_DIR}/configure WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} )
 
 add_compile_definitions(CONFDIR="/etc/pdnsd")
+endif()
 
 set(PDNSD_C_SOURCES
         ${PROJECT_SOURCE_DIR}/src/android.c
@@ -56,3 +65,8 @@ set(PDNSD_C_SOURCES
         ${PROJECT_SOURCE_DIR}/src/thread.h)
 
 add_executable(pdnsd ${PDNSD_C_SOURCES})
+
+if(ANDROID)
+target_link_libraries(pdnsd ancillary log)
+set_target_properties(pdnsd PROPERTIES PREFIX "lib" SUFFIX ".so")
+endif()
