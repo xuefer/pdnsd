@@ -1,4 +1,9 @@
 # gitignore patterns for pdnsd
+.vscode/
+.idea/
+build/
+cmake-build-debug/
+cmake-build-release/
 *~
 *.[oa]
 autom4te.cache/
