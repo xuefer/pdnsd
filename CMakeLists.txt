@@ -12,6 +12,7 @@ execute_process ( COMMAND ${PROJECT_SOURCE_DIR}/configure WORKING_DIRECTORY ${PR
 add_compile_definitions(CONFDIR="/etc/pdnsd")
 
 set(PDNSD_C_SOURCES
+        ${PROJECT_SOURCE_DIR}/src/android.c
         ${PROJECT_SOURCE_DIR}/src/cache.c
         ${PROJECT_SOURCE_DIR}/src/cache.h
         ${PROJECT_SOURCE_DIR}/src/conf-keywords.h

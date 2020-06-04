@@ -36,6 +36,8 @@
 #include <netinet/tcp.h>
 
 #include <sys/un.h>
+
+#ifdef ANDROID
 #include <ancillary.h>
 
 #include <android/log.h>
@@ -45,9 +47,12 @@
 #define LOGE(...)                                                \
     ((void)__android_log_print(ANDROID_LOG_ERROR, "pdnsd", \
                                __VA_ARGS__))
+#endif
+
 int
 protect_socket(int fd)
 {
+#ifdef ANDROID
     int sock;
     struct sockaddr_un addr;
 
@@ -98,4 +103,7 @@ protect_socket(int fd)
 
     close(sock);
     return ret;
+#else
+    return 0;
+#endif
 }
