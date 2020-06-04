@@ -40,6 +40,7 @@
 globparm_t global={
   perm_cache:        2048,
   cache_dir:         NULL,
+  protect:           NULL,
   pidfile:           NULL,
   port:              53,
   a:                 PDNSD_A_INITIALIZER,
@@ -152,50 +153,6 @@ int read_config_file(const char *nm, globparm_t *global, servparm_array *servers
 			*errstr=NULL;
 		return 0;
 	}
-	if(global || servers) {
-		/* Check restrictions on ownership and permissions of config file. */
-		int fd=fileno(in);
-		struct stat sb;
-
-		/* Note by Paul Rombouts: I am using fstat() instead of stat() here to
-		   prevent a possible exploitable race condition */
-		if (fd==-1 || fstat(fd,&sb)!=0) {
-			if(asprintf(errstr,
-				    "Error: Could not stat %s file %s: %s",
-				    conftype,nm,strerror(errno))<0)
-				*errstr=NULL;
-			goto close_file;
-		}
-		else if (sb.st_uid!=init_uid) {
-			/* Note by Paul Rombouts:
-			   Perhaps we should use getpwuid_r() instead of getpwuid(), which is not necessarily thread safe.
-			   As long as getpwuid() is only used by only one thread, it should be OK,
-			   but it is something to keep in mind.
-			*/
-			struct passwd *pws;
-			char owner[24],user[24];
-			if((pws=getpwuid(sb.st_uid)))
-				strncp(owner,pws->pw_name,sizeof(owner));
-			else
-				sprintf(owner,"%i",sb.st_uid);
-			if((pws=getpwuid(init_uid)))
-				strncp(user,pws->pw_name,sizeof(user));
-			else
-				sprintf(user,"%i",init_uid);
-			if(asprintf(errstr,
-				    "Error: %s file %s is owned by '%s', but pdnsd was started as user '%s'.",
-				    conftype,nm,owner,user)<0)
-				*errstr=NULL;
-			goto close_file;
-		}
-		else if ((sb.st_mode&(S_IWGRP|S_IWOTH))) {
-			if(asprintf(errstr,
-				    "Error: Bad %s file permissions: file %s must be only writeable by the user.",
-				    conftype,nm)<0)
-				*errstr=NULL;
-			goto close_file;
-		}
-	}
 
 	retval=confparse(in,NULL,global,servers,includedepth,errstr);
 close_file:
@@ -226,6 +183,7 @@ int reload_config_file(const char *nm, char **errstr)
 
 	global_new=global;
 	global_new.cache_dir=NULL;
+	global_new.protect=NULL;
 	global_new.pidfile=NULL;
 	global_new.scheme_file=NULL;
 	global_new.deleg_only_zones=NULL;
@@ -323,6 +281,7 @@ int reload_config_file(const char *nm, char **errstr)
 			goto cleanup_return;
 		}
 		free(global_new.cache_dir); global_new.cache_dir=global.cache_dir;
+		free(global_new.protect); global_new.protect=global.protect;
 		free(global_new.pidfile); global_new.pidfile=global.pidfile;
 		free(global_new.scheme_file); global_new.scheme_file=global.scheme_file;
 		free_zones(global.deleg_only_zones);
@@ -339,6 +298,7 @@ int reload_config_file(const char *nm, char **errstr)
 
  cleanup_return:
 	free(global_new.cache_dir);
+	free(global_new.protect);
 	free(global_new.pidfile);
 	free(global_new.scheme_file);
 	free_zones(global_new.deleg_only_zones);
