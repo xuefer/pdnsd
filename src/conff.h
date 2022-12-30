@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/socket.h>
-#include <net/if.h>
+#include <linux/if.h>
 #include "ipvers.h"
 #include "list.h"
 
